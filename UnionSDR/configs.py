@@ -47,7 +47,8 @@ config_tm = dict(
     confidence_window=1000,
     noise_tolerance=0.0,
     sm_ac=0.99,
-    seed=42)
+    seed=42
+)
 config_tp = dict(
     activeOverlapWeight=1,
     predictedActiveOverlapWeight=2,
