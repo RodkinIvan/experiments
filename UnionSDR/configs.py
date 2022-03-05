@@ -49,6 +49,26 @@ config_tm = dict(
     sm_ac=0.99,
     seed=42
 )
+
+config_sp_lower = dict(
+    boostStrength=0.0,
+    columnDimensions=[output_columns],
+    inputDimensions=[input_columns * cells_per_column],
+    potentialRadius=input_columns * cells_per_column,
+    dutyCyclePeriod=1000,
+    globalInhibition=True,
+    localAreaDensity=0.005,
+    minPctOverlapDutyCycle=0.001,
+    numActiveColumnsPerInhArea=0,
+    potentialPct=0.5,
+    spVerbosity=0,
+    stimulusThreshold=3,
+    synPermConnected=0.5,
+    synPermActiveInc=0.1,
+    synPermInactiveDec=0.01,
+    wrapAround=True,
+    seed=seed
+)
 config_tp = dict(
     activeOverlapWeight=1,
     predictedActiveOverlapWeight=2,
@@ -60,10 +80,13 @@ config_tp = dict(
     synPermPreviousPredActiveInc=0.05,
     historyLength=20,
     minHistory=3,
+    **config_sp_lower
+)
+config_sp_upper = dict(
     boostStrength=0.0,
     columnDimensions=[output_columns],
-    inputDimensions=[input_columns * cells_per_column],
-    potentialRadius=input_columns * cells_per_column,
+    inputDimensions=config_sp_lower['columnDimensions'],
+    potentialRadius=output_columns,
     dutyCyclePeriod=1000,
     globalInhibition=True,
     localAreaDensity=0.005,
