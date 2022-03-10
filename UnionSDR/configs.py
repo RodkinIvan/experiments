@@ -57,7 +57,7 @@ config_sp_lower = dict(
     potentialRadius=input_columns * cells_per_column,
     dutyCyclePeriod=1000,
     globalInhibition=True,
-    localAreaDensity=0.005,
+    localAreaDensity=0.01,
     minPctOverlapDutyCycle=0.001,
     numActiveColumnsPerInhArea=0,
     potentialPct=0.5,
@@ -69,6 +69,7 @@ config_sp_lower = dict(
     wrapAround=True,
     seed=seed
 )
+
 config_tp = dict(
     activeOverlapWeight=1,
     predictedActiveOverlapWeight=2,
@@ -89,7 +90,7 @@ config_sp_upper = dict(
     potentialRadius=output_columns,
     dutyCyclePeriod=1000,
     globalInhibition=True,
-    localAreaDensity=0.005,
+    localAreaDensity=0.01,
     minPctOverlapDutyCycle=0.001,
     numActiveColumnsPerInhArea=0,
     potentialPct=0.5,
