@@ -42,13 +42,12 @@ def get_transformed_data(midi_file: MidiFile):
     for track in midi_file.tracks:
         transformed.append(_transform_data(get_midi_data(track)))
     
-    transformed = pd.concat(transformed).reset_index()
+    transformed = pd.concat(transformed)
+    transformed = transformed.sort_values(by='time').reset_index()
     transformed = transformed.drop(columns=['index'])
 
-    transformed = transformed.sort_values(by='time')
-
     transformed['time'] -= pd.concat([pd.Series([0]), transformed['time'][:-1]]).reset_index().drop(columns=['index'])[0]
-
+ 
     return transformed
     
 
@@ -65,7 +64,7 @@ def set_default_prefix(midi_file: MidiFile):
 def midi_from_transformed(t_data: pd.DataFrame) -> MidiFile:
     data = t_data.copy()
     data['time'] = data['time'].cumsum()
-    
+
     note_off = data.copy()
     data.drop(columns=['dur'], inplace=True)
 
