@@ -1,3 +1,4 @@
+from tracemalloc import start
 from mido import MidiFile
 from midi_utils import get_transformed_data, load_transformed
 from utils import batchify, data_process, get_batch, device
@@ -14,7 +15,7 @@ import time
 n_notes = 128
 n_real_features = 2
 batch_size = 20
-n_epochs = 200
+n_epochs = 500
 
 trans_conf = dict(
     n_notes=n_notes,
@@ -72,7 +73,20 @@ def train(model, dataset, bptt, epoch):
                   f'loss {cur_loss:5.2f} | ppl {ppl:8.2f}')
             total_loss = 0
             start_time = time.time()
-        
+
+def generate(model: nn.Module, start_note: Tensor, length: int):
+    model.eval()
+    cur_seq = start_note.view(1, *start_note.shape)
+
+    src_mask = generate_square_subsequent_mask(len(cur_seq)).to(device)
+    for i in range(length-1):
+        data = cur_seq.view(len(cur_seq), 1, start_note.shape[0]).to(device)
+        output = model(data, src_mask)[-1, 0, :]
+        cur_seq = torch.cat([cur_seq, output.view(1, len(start_note))])
+        src_mask = generate_square_subsequent_mask(len(cur_seq)).to(device)
+    return cur_seq
+
+            
 
 if __name__ == '__main__':
 
@@ -80,5 +94,7 @@ if __name__ == '__main__':
     data = get_transformed_data(md)
     train_data = data_process(data, n_notes=n_notes)
     train_data = batchify(train_data, batch_size)
-    for epoch in range(n_epochs):
+    for epoch in range(1,n_epochs+1):
         train(model, train_data, 10, epoch)
+    sequence = generate(model, train_data[0][0], 10)
+    print(sequence.shape)
