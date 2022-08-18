@@ -1,5 +1,6 @@
 from mido import MidiFile
 from midi_utils import get_transformed_data, load_transformed
+from utils import data_process, standardize
 
 from midi_transformer import MidiTransformer
 
@@ -22,4 +23,11 @@ if __name__ == '__main__':
         nlayers=2,
         dropout=0.3
     )
-    
+    md = MidiFile('/home/ivan/Desktop/Notes/MIDI/1.mid')
+    data = get_transformed_data(md)
+    # print(data)
+    fl_data = data_process(data, n_notes=128)
+    print(fl_data.shape)
+
+
+    # print(standardize(torch.randn(4, 4)[:, 2]))
