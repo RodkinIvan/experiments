@@ -40,6 +40,7 @@ class MidiTransformer(nn.Module):
                  ) -> None:
         super().__init__()
         self.model_type = 'Transformer'
+        self.d_model = d_model
 
         self.pos_encoder = PositionalEncoding(d_model, dropout)
 

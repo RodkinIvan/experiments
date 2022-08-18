@@ -55,3 +55,18 @@ def batchify(data: Tensor, bsz: int) -> Tensor:
     data = data[:seq_len * bsz]
     data = data.view(bsz, seq_len, *data.shape[1:]).transpose(0, 1).contiguous()
     return data.to(device)
+
+def get_batch(source: Tensor, i: int, bptt) -> Tuple[Tensor, Tensor]:
+    """
+    Args:
+        source: Tensor, shape [full_seq_len, batch_size]
+        i: int
+
+    Returns:
+        tuple (data, target), where data has shape [seq_len, batch_size] and
+        target has shape [seq_len * batch_size]
+    """
+    seq_len = min(bptt, len(source) - 1 - i)
+    data = source[i:i+seq_len]
+    target = source[i+1:i+1+seq_len].view(seq_len*source.shape[1], *source.shape[2:])
+    return data, target
