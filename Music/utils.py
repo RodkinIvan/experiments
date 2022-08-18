@@ -37,7 +37,7 @@ def data_process(data, n_notes) -> Tensor:
 
     data[:, n_notes] = standardize(data[:, n_notes])
     data[:, n_notes+1] = standardize(data[:, n_notes+1])
-    return torch.cat(tuple(filter(lambda t: t.numel() > 0, data)))
+    return data
 
 
 def batchify(data: Tensor, bsz: int) -> Tensor:
@@ -53,5 +53,5 @@ def batchify(data: Tensor, bsz: int) -> Tensor:
     """
     seq_len = data.size(0) // bsz
     data = data[:seq_len * bsz]
-    data = data.view(bsz, seq_len).t().contiguous()
+    data = data.view(bsz, seq_len, *data.shape[1:]).transpose(0, 1).contiguous()
     return data.to(device)

@@ -1,6 +1,6 @@
 from mido import MidiFile
 from midi_utils import get_transformed_data, load_transformed
-from utils import data_process, standardize
+from utils import batchify, data_process, standardize
 
 from midi_transformer import MidiTransformer
 
@@ -26,8 +26,11 @@ if __name__ == '__main__':
     md = MidiFile('/home/ivan/Desktop/Notes/MIDI/1.mid')
     data = get_transformed_data(md)
     # print(data)
-    fl_data = data_process(data, n_notes=128)
-    print(fl_data.shape)
+    train_data = data_process(data, n_notes=128)
+    batch_size = 20
+    print(train_data.shape)
+    train_data = batchify(train_data, batch_size)
+    print(train_data.shape)
 
 
     # print(standardize(torch.randn(4, 4)[:, 2]))
