@@ -12,10 +12,15 @@ from torch import Tensor
 import math
 import time
 
+import pandas as pd
+
 n_notes = 128
 n_real_features = 2
 batch_size = 20
-n_epochs = 500
+n_epochs = 1000
+bptt = 16
+
+generate_n = 20
 
 trans_conf = dict(
     n_notes=n_notes,
@@ -84,9 +89,9 @@ def generate(model: nn.Module, start_note: Tensor, length: int):
         output = model(data, src_mask)[-1, 0, :]
         cur_seq = torch.cat([cur_seq, output.view(1, len(start_note))])
         src_mask = generate_square_subsequent_mask(len(cur_seq)).to(device)
-    return cur_seq
-
-            
+    notes = cur_seq[:, :-2].argmax(dim=1).view(-1, 1)
+    length = cur_seq[:, -2:].clip(0, 1).float()
+    return torch.cat([notes, length], dim=1).cpu().detach().numpy()
 
 if __name__ == '__main__':
 
@@ -95,6 +100,14 @@ if __name__ == '__main__':
     train_data = data_process(data, n_notes=n_notes)
     train_data = batchify(train_data, batch_size)
     for epoch in range(1,n_epochs+1):
-        train(model, train_data, 10, epoch)
-    sequence = generate(model, train_data[0][0], 10)
-    print(sequence.shape)
+        train(model, train_data, bptt, epoch)
+    sequence = generate(model, train_data[0][0], generate_n)
+    df_gen = pd.DataFrame(sequence, columns=['note', 'time', 'dur'])
+
+    df_gen['velocity'] = 80
+    df_gen[['time','dur']] *= 500
+
+    df_gen = df_gen.astype('int32')
+    torch.save(model, 'cur_model.pt')
+
+    load_transformed(df_gen, '/home/ivan/Desktop/Notes/MIDI/tr1.mid')

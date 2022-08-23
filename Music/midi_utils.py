@@ -80,7 +80,7 @@ def midi_from_transformed(t_data: pd.DataFrame) -> MidiFile:
     prev_time = 0
     for msg in data.iterrows():
         msg = msg[1]
-        md.tracks[0].append(Message('note_on', channel=0, note=msg['note'], velocity=msg['velocity'], time=msg['time'] - prev_time))
+        md.tracks[0].append(Message('note_on', channel=0, note=int(msg['note']), velocity=msg['velocity'], time=msg['time'] - prev_time))
         prev_time = msg['time']
 
     md.tracks[0].append(MetaMessage('end_of_track', time=1))
