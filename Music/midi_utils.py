@@ -89,3 +89,15 @@ def midi_from_transformed(t_data: pd.DataFrame) -> MidiFile:
 def load_transformed(t_data: pd.DataFrame, path: str):
     md = midi_from_transformed(t_data)
     md.save(path)
+
+
+
+def form_dataset(midies: list[str]):
+    data = []
+    for path in midies:
+        md = MidiFile(path)
+        data_el = get_transformed_data(md)
+        data.append(data_el)
+    
+    data = pd.concat(data)
+    return data

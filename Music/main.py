@@ -16,9 +16,9 @@ import pandas as pd
 
 n_notes = 128
 n_real_features = 2
-batch_size = 10
-n_epochs = 1000
-bptt = 16
+batch_size = 20
+n_epochs = 10
+bptt = 20
 
 generate_n = 20
 
@@ -29,7 +29,7 @@ trans_conf = dict(
     nhead=8,
     d_hid=200,
     nlayers=8,
-    dropout=0.3
+    dropout=0.0
 )
 
 model = MidiTransformer(**trans_conf).to(device)
@@ -95,7 +95,10 @@ def generate(model: nn.Module, start_notes: Tensor, length: int):
 
 if __name__ == '__main__':
     md = MidiFile('/home/ivan/Desktop/Notes/MIDI/1.mid')
-    data = get_transformed_data(md)
+    # data = get_transformed_data(md)
+    data = pd.read_csv('all_midies.csv')
+
+
     train_data = data_process(data, n_notes=n_notes)
     train_data = batchify(train_data, batch_size)
     for epoch in range(1,n_epochs+1):
