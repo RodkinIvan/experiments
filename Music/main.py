@@ -18,7 +18,7 @@ import numpy as np
 n_notes = 128
 n_real_features = 2
 batch_size = 20
-n_epochs = 20
+n_epochs = 200
 bptt = 40
 
 generate_n = 50
@@ -27,7 +27,7 @@ trans_conf = dict(
     n_notes=n_notes,
     n_real_features=n_real_features,
     d_model=200,
-    nhead=4,
+    nhead=2,
     d_hid=200,
     nlayers=4,
     dropout=0.1
@@ -35,10 +35,7 @@ trans_conf = dict(
 
 model = MidiTransformer(**trans_conf).to(device)
 
-criterion = nn.CrossEntropyLoss()
-lr = 5.0  # learning rate
-optimizer = torch.optim.Adam(model.parameters())
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.95)
+# scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1, gamma=0.95)
 
 
 def generate_square_subsequent_mask(sz: int) -> Tensor:
@@ -47,6 +44,12 @@ def generate_square_subsequent_mask(sz: int) -> Tensor:
 
 
 def train(model, dataset, bptt, epoch):
+
+
+    criterion = nn.CrossEntropyLoss()
+    lr = 5.0  # learning rate
+    optimizer = torch.optim.Adam(model.parameters())
+
     model.train()  # turn on train mode
     total_loss = 0.
     log_interval = 1
@@ -70,7 +73,7 @@ def train(model, dataset, bptt, epoch):
 
         total_loss += loss.item()
         if batch % log_interval == 0 and batch > 0:
-            lr = scheduler.get_last_lr()[0]
+            # lr = scheduler.get_last_lr()[0]
             ms_per_batch = (time.time() - start_time) * 1000 / log_interval
             cur_loss = total_loss / log_interval
             ppl = math.exp(cur_loss)
@@ -117,7 +120,7 @@ if __name__ == '__main__':
     train_data = batchify(train_data, batch_size)
     for epoch in range(1,n_epochs+1):
         train(model, train_data, bptt, epoch)
-    sequence = generate(model, train_data[0][6:7], generate_n)
+    sequence = generate(model, train_data[0][10:11], generate_n)
     df_gen = pd.DataFrame(sequence, columns=['note', 'time', 'dur'])
 
     df_gen['velocity'] = 80
