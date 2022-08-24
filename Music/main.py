@@ -1,4 +1,3 @@
-from tracemalloc import start
 from mido import MidiFile
 from midi_utils import get_transformed_data, load_transformed
 from utils import batchify, data_process, get_batch, device
@@ -8,6 +7,7 @@ from midi_transformer import MidiTransformer
 import torch
 import torch.nn as nn
 from torch import Tensor
+from torch.nn.functional import one_hot
 
 import math
 import time
@@ -19,7 +19,7 @@ n_notes = 128
 n_real_features = 2
 batch_size = 20
 n_epochs = 20
-bptt = 100
+bptt = 40
 
 generate_n = 50
 
@@ -27,10 +27,10 @@ trans_conf = dict(
     n_notes=n_notes,
     n_real_features=n_real_features,
     d_model=200,
-    nhead=8,
+    nhead=4,
     d_hid=200,
-    nlayers=8,
-    dropout=0.3
+    nlayers=4,
+    dropout=0.1
 )
 
 model = MidiTransformer(**trans_conf).to(device)
@@ -88,21 +88,24 @@ def generate(model: nn.Module, start_notes: Tensor, length: int):
     for i in range(length-1):
         data = cur_seq.view(len(cur_seq), 1, start_notes.shape[1]).to(device)
         output = model(data, src_mask)[-1, 0, :]
+
+        output[:-2] = one_hot(
+            torch.tensor(
+                np.random.choice(
+                    list(range(output.shape[0]-2)),
+                    p=output[:-2].softmax(dim=0).cpu().detach().numpy()
+                )
+            ),
+            num_classes=output.shape[0]-2
+        )
+        output[-2:] = output[-2:].clip(0, 1)
+        output = output.to(device)
         cur_seq = torch.cat([cur_seq, output.view(1, start_notes.shape[1])])
         src_mask = generate_square_subsequent_mask(len(cur_seq)).to(device)
-    # notes = cur_seq[:, :-2].argmax(dim=1).view(-1, 1)
+    notes = cur_seq[:, :-2].argmax(dim=1).view(-1, 1)
+    times = cur_seq[:, -2:]
 
-    notes = cur_seq[:, :-2].softmax(dim=1)
-    notes = torch.tensor([
-        np.random.choice(
-                list(range(notes.shape[1])),
-                p=notes[i].cpu().detach().numpy()
-            )
-            for i in range(notes.shape[0])
-    ]).view(-1, 1)
-
-    length = cur_seq[:, -2:].clip(0, 1).float().cpu().detach()
-    return torch.cat([notes, length], dim=1).numpy()
+    return torch.cat([notes, times], dim=1).cpu().detach().numpy()
 
 if __name__ == '__main__':
     md = MidiFile('/home/ivan/Desktop/Notes/MIDI/1.mid')
@@ -114,7 +117,7 @@ if __name__ == '__main__':
     train_data = batchify(train_data, batch_size)
     for epoch in range(1,n_epochs+1):
         train(model, train_data, bptt, epoch)
-    sequence = generate(model, train_data[0][:5], generate_n)
+    sequence = generate(model, train_data[0][6:7], generate_n)
     df_gen = pd.DataFrame(sequence, columns=['note', 'time', 'dur'])
 
     df_gen['velocity'] = 80
