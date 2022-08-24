@@ -13,14 +13,15 @@ import math
 import time
 
 import pandas as pd
+import numpy as np
 
 n_notes = 128
 n_real_features = 2
 batch_size = 20
-n_epochs = 10
-bptt = 20
+n_epochs = 20
+bptt = 100
 
-generate_n = 20
+generate_n = 50
 
 trans_conf = dict(
     n_notes=n_notes,
@@ -29,7 +30,7 @@ trans_conf = dict(
     nhead=8,
     d_hid=200,
     nlayers=8,
-    dropout=0.0
+    dropout=0.3
 )
 
 model = MidiTransformer(**trans_conf).to(device)
@@ -89,21 +90,31 @@ def generate(model: nn.Module, start_notes: Tensor, length: int):
         output = model(data, src_mask)[-1, 0, :]
         cur_seq = torch.cat([cur_seq, output.view(1, start_notes.shape[1])])
         src_mask = generate_square_subsequent_mask(len(cur_seq)).to(device)
-    notes = cur_seq[:, :-2].argmax(dim=1).view(-1, 1)
-    length = cur_seq[:, -2:].clip(0, 1).float()
-    return torch.cat([notes, length], dim=1).cpu().detach().numpy()
+    # notes = cur_seq[:, :-2].argmax(dim=1).view(-1, 1)
+
+    notes = cur_seq[:, :-2].softmax(dim=1)
+    notes = torch.tensor([
+        np.random.choice(
+                list(range(notes.shape[1])),
+                p=notes[i].cpu().detach().numpy()
+            )
+            for i in range(notes.shape[0])
+    ]).view(-1, 1)
+
+    length = cur_seq[:, -2:].clip(0, 1).float().cpu().detach()
+    return torch.cat([notes, length], dim=1).numpy()
 
 if __name__ == '__main__':
     md = MidiFile('/home/ivan/Desktop/Notes/MIDI/1.mid')
     # data = get_transformed_data(md)
-    data = pd.read_csv('all_midies.csv')
+    data = pd.read_csv('/home/ivan/DataspellProjects/experiments/Music/all_midies.csv')
 
 
     train_data = data_process(data, n_notes=n_notes)
     train_data = batchify(train_data, batch_size)
     for epoch in range(1,n_epochs+1):
         train(model, train_data, bptt, epoch)
-    sequence = generate(model, train_data[0][:1], generate_n)
+    sequence = generate(model, train_data[0][:5], generate_n)
     df_gen = pd.DataFrame(sequence, columns=['note', 'time', 'dur'])
 
     df_gen['velocity'] = 80
